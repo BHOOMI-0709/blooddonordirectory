@@ -1,214 +1,263 @@
-# 🩸 RaktSetu - Blood Donor Directory
+# 🩸 RaktSetu – Blood Donor Directory
 
-Full-stack web app: **Spring Boot (backend) + HTML/CSS/JavaScript (frontend)**, light theme.
-Frontend Spring Boot ke `static` folder me hai, isliye **ek hi server, ek hi deploy** - alag se frontend host karne ki zaroorat nahi (chaho to kar sakte ho, neeche Option B).
+RaktSetu is a full-stack blood donor directory web application built with **Spring Boot (backend) and HTML, CSS, and JavaScript (frontend)**. It features a clean, light-themed interface.
+
+The frontend is served directly from Spring Boot's `static` directory, allowing the entire application to run on a single server and be deployed as one service.
 
 ## Features
 
-- Donor registration (validation + duplicate phone check + consent checkbox)
-- Search & filter: naam, blood group, city, sirf available donors, pagination
-- Blood group chips with live donor count
-- Donor card: Available / Rest period / Unavailable badge, Call + WhatsApp button
-- Blood requests: post karo, urgency (Normal/Urgent/Critical), Open/Fulfilled filter
-- Admin mode: donor edit/delete, request fulfil/delete (admin key se)
-- Blood compatibility chart, donate karne ki shartein, FAQ
-- Mobile responsive, light colour theme
+* Donor registration with validation, duplicate phone number checks, and consent.
+* Search and filter donors by name, blood group, city, and availability.
+* Pagination and live donor counts by blood group.
+* Donor cards with availability status and Call and WhatsApp buttons.
+* Blood request management with Normal, Urgent, and Critical priorities.
+* Filtering of Open and Fulfilled blood requests.
+* Admin functionality for managing donors and blood requests.
+* Blood group compatibility chart, donation eligibility information, and FAQs.
+* Responsive design with a light color theme.
 
-## Folder structure
+## Project Structure
 
-```
+```text
 blood-donor-directory/
-├── pom.xml                         # Maven dependencies
-├── Dockerfile                      # deployment ke liye
-├── .dockerignore / .gitignore
-├── README.md                       # ye guide
+├── pom.xml
+├── Dockerfile
+├── .dockerignore
+├── .gitignore
+├── README.md
 └── src/main/
     ├── java/com/blooddonor/
-    │   ├── BloodDonorApplication.java      # app yahin se start
-    │   ├── model/                          # Donor, BloodRequest (tables) + Stats, PageResponse
-    │   ├── repository/                     # database queries (Spring Data JPA)
-    │   ├── service/                        # business logic (search, duplicate check, stats)
-    │   ├── controller/                     # REST APIs (Donor, BloodRequest, Admin)
-    │   ├── exception/                      # saare errors ek format me
-    │   └── config/                         # CORS, AdminGuard, DataSeeder (demo data)
+    │   ├── BloodDonorApplication.java
+    │   ├── model/
+    │   ├── repository/
+    │   ├── service/
+    │   ├── controller/
+    │   ├── exception/
+    │   └── config/
     └── resources/
-        ├── application.properties          # local settings (H2 database)
-        ├── application-prod.properties     # production settings (PostgreSQL)
-        └── static/                         # FRONTEND
+        ├── application.properties
+        ├── application-prod.properties
+        └── static/
             ├── index.html
             ├── css/style.css
-            └── js/ config.js, app.js
+            └── js/
+                ├── config.js
+                └── app.js
 ```
 
-Request ka flow: `Browser (app.js) → Controller → Service → Repository → Database`
+### Request Flow
 
----
+`Browser → Controller → Service → Repository → Database`
 
-## 1) Local pe chalana (pehle yahi karo)
+## 1. Run the Application Locally
 
-**Chahiye:** Java 17+ aur Maven (ya IntelliJ / Eclipse / VS Code with Java extension).
+### Prerequisites
+
+* Java 17 or later
+* Maven, or an IDE such as IntelliJ IDEA, Eclipse, or VS Code with Java support
+
+### Start the Application
 
 ```bash
-cd blood-donor-directory
 mvn spring-boot:run
 ```
 
-Browser me kholo: **http://localhost:8080**
+Open your browser and visit:
 
-- Pehli baar demo donors/requests apne aap ban jayenge (fake numbers `9000000xxx`).
-- Database file `./data/blooddb...` me save hota hai (H2), restart pe data bachega.
-- **Admin login:** key `admin123` (sirf local ke liye; production me badalna hai).
+`http://localhost:8080`
 
-IDE se chalana ho to `BloodDonorApplication.java` me `main` ko Run karo.
+### Additional Information
 
-Jar bana ke chalana:
+* Demo donors and blood requests may be created automatically when demo seeding is enabled.
+* The local database uses H2, according to the application configuration.
+* The local admin key is `admin123`. This key must be changed before production deployment.
 
-```bash
-mvn clean package
-java -jar target/app.jar
-```
+To run the application from an IDE, execute the `main` method in `BloodDonorApplication.java`.
 
-## 2) API list
-
-| Method | URL | Kaun | Kaam |
-|---|---|---|---|
-| GET | `/api/donors?bloodGroup=A%2B&city=meerut&q=aarav&available=true&page=0&size=9` | public | search + filter |
-| GET | `/api/donors/stats` | public | counters |
-| GET | `/api/donors/{id}` | public | ek donor |
-| POST | `/api/donors` | public | register |
-| PUT | `/api/donors/{id}` | admin | edit |
-| DELETE | `/api/donors/{id}` | admin | delete |
-| GET | `/api/requests?status=Open` | public | requests list |
-| POST | `/api/requests` | public | nayi request |
-| PATCH | `/api/requests/{id}/fulfil` | admin | fulfilled mark |
-| DELETE | `/api/requests/{id}` | admin | delete |
-| GET | `/api/admin/verify` | admin | key check |
-
-Admin calls me header bhejna hota hai: `X-Admin-Key: <tumhari key>`.
-Dhyan: blood group URL me `+` ko `%2B` likhte hain (`A%2B`), warna space ban jata hai.
-
-## 3) Settings (environment variables)
-
-| Variable | Matlab | Default |
-|---|---|---|
-| `PORT` | server port | 8080 |
-| `ADMIN_KEY` | admin password | `admin123` (prod me **zaroori**) |
-| `SEED_DEMO` | demo data daalna | local: true, prod: false |
-| `CORS_ORIGINS` | frontend alag host ho to uska URL | `*` |
-| `SPRING_PROFILES_ACTIVE` | `prod` = PostgreSQL mode | - |
-| `DB_URL`, `DB_USER`, `DB_PASSWORD` | PostgreSQL details (sirf prod) | - |
-
----
-
-## 4) Deploy karna (Option A: poora app ek saath, Docker + PostgreSQL)
-
-Free hosts pe disk **temporary** hota hai, isliye production me H2 file nahi, **PostgreSQL** use karo.
-
-### Step 1 - Code GitHub pe daalo
-
-```bash
-cd blood-donor-directory
-git init
-git add .
-git commit -m "Blood donor directory"
-# GitHub pe naya empty repo banao, phir:
-git branch -M main
-git remote add origin https://github.com/<tumhara-username>/blood-donor-directory.git
-git push -u origin main
-```
-
-### Step 2 - Free PostgreSQL banao
-
-Koi bhi managed Postgres chalega (Neon, Supabase, Render Postgres, Railway...). Free plan ki shartein badalti rehti hain, signup se pehle unka pricing page check kar lena.
-
-Database ban jaye to ye 4 cheezein note karo: **host, database name, user, password**. Phir:
-
-```
-DB_URL      = jdbc:postgresql://<HOST>:5432/<DBNAME>?sslmode=require
-DB_USER     = <user>
-DB_PASSWORD = <password>
-```
-
-(Dhyan: `postgres://...` wala URL seedha nahi chalega, Spring ko `jdbc:postgresql://` format chahiye.)
-
-### Step 3 - Web service banao (Render ka example)
-
-1. render.com pe login → **New → Web Service** → apna GitHub repo connect karo.
-2. **Runtime / Language: Docker** chuno (repo me `Dockerfile` hai, wo khud pakad lega).
-3. **Environment Variables** me ye daalo:
-
-   | Key | Value |
-   |---|---|
-   | `SPRING_PROFILES_ACTIVE` | `prod` |
-   | `DB_URL` | Step 2 wala |
-   | `DB_USER` | Step 2 wala |
-   | `DB_PASSWORD` | Step 2 wala |
-   | `ADMIN_KEY` | koi lamba strong password |
-   | `SEED_DEMO` | `false` (ya `true` agar sirf demo dikhana hai) |
-
-4. **Create Web Service** dabao. Pehli build me kuch minute lagte hain.
-5. Deploy hone ke baad Render ka URL (`https://...onrender.com`) kholo. Wahi tumhari live website hai.
-
-> Free instance kuch der idle rehne par so jaata hai, to pehla page load slow ho sakta hai. Ye normal hai.
-
-### Step 4 - Check karo
-
-- Website khulti hai?
-- Register karke dekho, donor list me aaya?
-- Navbar me **Admin Login** → apni `ADMIN_KEY` daalo → Edit/Delete buttons dikhne chahiye.
-
-Doosre hosts (Railway, Koyeb, Fly.io) pe bhi yahi Dockerfile + yahi environment variables chalte hain.
-
----
-
-## 5) Option B: Frontend alag deploy (Netlify / Vercel / GitHub Pages)
-
-Jab frontend alag chahiye:
-
-1. Backend upar wale Option A se deploy karo.
-2. `src/main/resources/static/js/config.js` me backend URL daalo:
-   ```js
-   window.APP_CONFIG = { API_BASE: "https://tumhara-backend.onrender.com" };
-   ```
-3. Poora `static` folder (index.html, css, js) Netlify/Vercel pe upload/deploy karo.
-4. Backend me env variable set karo (CORS ke liye):
-   `CORS_ORIGINS = https://tumhari-site.netlify.app`
-5. Backend redeploy karo.
-
-## 6) Option C: Apne server / VPS pe
+### Build the Application
 
 ```bash
 mvn clean package
-SPRING_PROFILES_ACTIVE=prod DB_URL=... DB_USER=... DB_PASSWORD=... ADMIN_KEY=... \
-  java -jar target/app.jar
 ```
-Saath me Nginx + HTTPS (Let's Encrypt) lagana best rehta hai.
+
+Run the generated JAR file using the actual filename created in the `target` directory:
+
+```bash
+java -jar target/<generated-file-name>.jar
+```
+
+## 2. API Reference
+
+| Method | Endpoint                    | Access | Description                 |
+| ------ | --------------------------- | ------ | --------------------------- |
+| GET    | `/api/donors`               | Public | Search and filter donors    |
+| GET    | `/api/donors/stats`         | Public | Retrieve donor statistics   |
+| GET    | `/api/donors/{id}`          | Public | Retrieve a donor by ID      |
+| POST   | `/api/donors`               | Public | Register a donor            |
+| PUT    | `/api/donors/{id}`          | Admin  | Update donor information    |
+| DELETE | `/api/donors/{id}`          | Admin  | Delete a donor              |
+| GET    | `/api/requests`             | Public | Retrieve blood requests     |
+| POST   | `/api/requests`             | Public | Create a blood request      |
+| PATCH  | `/api/requests/{id}/fulfil` | Admin  | Mark a request as fulfilled |
+| DELETE | `/api/requests/{id}`        | Admin  | Delete a blood request      |
+| GET    | `/api/admin/verify`         | Admin  | Verify the admin key        |
+
+### Search Example
+
+```text
+/api/donors?bloodGroup=A%2B&city=meerut&q=aarav&available=true&page=0&size=9
+```
+
+For blood groups containing a plus sign, encode `+` as `%2B` in URL parameters.
+
+Admin requests must include the following HTTP header:
+
+```text
+X-Admin-Key: <your-admin-key>
+```
+
+## 3. Configuration
+
+The application supports the following environment variables. Confirm their exact defaults in the application configuration files before deployment.
+
+| Variable                 | Purpose                                           |
+| ------------------------ | ------------------------------------------------- |
+| `PORT`                   | Server port                                       |
+| `ADMIN_KEY`              | Admin access key                                  |
+| `SEED_DEMO`              | Enables or disables demo data                     |
+| `CORS_ORIGINS`           | Permitted frontend origins when hosted separately |
+| `SPRING_PROFILES_ACTIVE` | Selects the active Spring profile                 |
+| `DB_URL`                 | Production database JDBC URL                      |
+| `DB_USER`                | Database username                                 |
+| `DB_PASSWORD`            | Database password                                 |
+
+The production profile is intended for PostgreSQL, while local development uses the database configured in `application.properties`.
+
+## 4. Deployment
+
+### Option A: Deploy the Full Application Together
+
+This option serves the frontend and backend from the same Spring Boot application.
+
+#### Step 1: Upload the Code to GitHub
+
+Create a GitHub repository and push the project code to it.
+
+Repository: [RaktSetu Blood Donor Directory](https://github.com/BHOOMI-0709/blooddonordirectory)
+
+#### Step 2: Create a PostgreSQL Database
+
+Create a managed PostgreSQL database using a suitable hosting provider.
+
+Keep the following details available privately:
+
+* Database host
+* Database name
+* Database username
+* Database password
+
+Configure the JDBC connection URL in this format:
+
+```text
+jdbc:postgresql://<HOST>:5432/<DATABASE_NAME>?sslmode=require
+```
+
+Use the connection details supplied by your database provider.
+
+#### Step 3: Deploy on Render
+
+1. Sign in to Render.
+2. Create a new Web Service.
+3. Connect the GitHub repository.
+4. Select Docker as the runtime if using the included Dockerfile.
+5. Configure the required environment variables.
+
+| Variable                 | Value                    |
+| ------------------------ | ------------------------ |
+| `SPRING_PROFILES_ACTIVE` | `prod`                   |
+| `DB_URL`                 | Your PostgreSQL JDBC URL |
+| `DB_USER`                | Your database username   |
+| `DB_PASSWORD`            | Your database password   |
+| `ADMIN_KEY`              | A strong, unique secret  |
+| `SEED_DEMO`              | `false` for production   |
+
+6. Start the deployment and review the build logs.
+7. Open the public URL provided by Render.
+
+**Important:** Verify the Dockerfile, production database configuration, and environment variable names before deploying.
+
+Free hosting services may suspend inactive applications or impose resource limits. Check the provider's current pricing and service limitations.
+
+#### Step 4: Verify the Deployment
+
+* Confirm that the homepage loads.
+* Register a test donor.
+* Verify that donor information is saved and retrieved correctly.
+* Test donor search and filtering.
+* Verify admin access and blood request functionality.
+* Check application logs if any feature fails.
+
+### Option B: Deploy the Frontend Separately
+
+If you prefer separate frontend hosting:
+
+1. Deploy the Spring Boot backend.
+2. Configure `src/main/resources/static/js/config.js` to use the deployed backend URL:
+
+```javascript
+window.APP_CONFIG = {
+    API_BASE: "https://your-backend.onrender.com"
+};
+```
+
+3. Deploy the frontend files to a suitable static hosting provider.
+4. Configure `CORS_ORIGINS` on the backend with the actual frontend origin.
+5. Redeploy the backend and test the frontend-to-backend connection.
+
+Confirm the existing `config.js` format before replacing its contents.
+
+### Option C: Deploy to a VPS
+
+Build the application:
+
+```bash
+mvn clean package
+```
+
+Configure the production environment variables and run the generated JAR file.
+
+For a public production deployment, configure HTTPS, a reverse proxy such as Nginx, and appropriate server security.
+
+## 5. Troubleshooting
+
+| Issue                              | Possible Solution                                                      |
+| ---------------------------------- | ---------------------------------------------------------------------- |
+| Missing `DB_URL` configuration     | Check the production environment variables                             |
+| Port already in use                | Change the local port or stop the conflicting process                  |
+| Donors do not appear               | Check browser console errors, API responses, and database connectivity |
+| Database connection fails          | Verify the JDBC URL, credentials, and SSL requirements                 |
+| Admin authentication fails         | Check that the configured admin key matches the supplied key           |
+| Data disappears after redeployment | Check whether the application uses persistent database storage         |
+| Maven command is unavailable       | Install Maven or use the IDE's Maven integration                       |
+
+## 6. Security and Privacy
+
+* Replace the default admin key before production deployment.
+* Never commit database passwords, admin secrets, or other credentials to GitHub.
+* Use HTTPS for public deployments.
+* Obtain appropriate consent before displaying donor contact information.
+* Review applicable privacy and data protection requirements before collecting real user information.
+* Consider rate limiting, CAPTCHA, and stronger authentication for production use.
+* Blood donation eligibility and medical screening must be handled by qualified healthcare professionals and blood banks.
+
+## 7. Future Enhancements
+
+* User authentication with Spring Security and JWT.
+* Email or SMS notifications for matching blood requests.
+* Location-based donor discovery.
+* Automated tests using JUnit and MockMvc.
+* Database migration management using Flyway.
 
 ---
 
-## 7) Aam errors aur solution
-
-| Problem | Solution |
-|---|---|
-| `Could not resolve placeholder 'DB_URL'` | prod me env variables set nahi hain (`DB_URL`, `DB_USER`, `DB_PASSWORD`, `ADMIN_KEY`) |
-| `Port 8080 already in use` | `PORT=9090` set karo ya purani app band karo |
-| Page khulta hai par donors nahi aate | Browser Console (F12) dekho; alag frontend ho to `API_BASE` aur `CORS_ORIGINS` check karo |
-| `Connection refused` / DB error on deploy | `DB_URL` me `jdbc:postgresql://` aur `?sslmode=require` check karo |
-| Admin login fail | `ADMIN_KEY` env variable wahi daalo jo deploy me set kiya |
-| Data redeploy pe gayab | H2 use ho raha hai; `SPRING_PROFILES_ACTIVE=prod` + PostgreSQL lagao |
-| `mvn` command nahi mili | Maven install karo ya IntelliJ/Eclipse se run karo |
-
-## 8) Security aur privacy notes (zaroor padho)
-
-- **`ADMIN_KEY` zaroor badlo** aur kisi ko mat batao. Ye simple shared key hai; bade level pe Spring Security + login (JWT) lagana chahiye.
-- Donor ka phone number public dikhta hai, isliye register form me **consent checkbox** hai. Real users ka data lene se pehle privacy policy / data protection ka dhyan rakho.
-- Hamesha **HTTPS** use karo (Render/Netlify khud dete hain).
-- Spam rokne ke liye baad me rate limiting / captcha add kar sakte ho.
-- Ye app sirf donors aur patients ko jodta hai; blood ki medical screening hospital/blood bank hi karte hain.
-
-## 9) Aage kya add kar sakte ho (practice ke liye)
-
-1. Donor login (Spring Security + JWT)
-2. Email/SMS alert jab matching blood group ki request aaye
-3. Map / distance se nearest donor
-4. Unit tests (JUnit + MockMvc) aur Postgres me Flyway migrations
+**RaktSetu – Connecting Blood Donors with Those in Need.**

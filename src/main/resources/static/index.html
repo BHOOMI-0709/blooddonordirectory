@@ -1,0 +1,228 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>RaktSetu - Blood Donor Directory</title>
+  <meta name="description" content="Find blood donors in your city, register as a donor, and post blood requests.">
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+
+  <!-- ========== NAVBAR ========== -->
+  <header class="nav">
+    <div class="container nav-inner">
+      <a href="#home" class="brand"><span class="drop">🩸</span> RaktSetu</a>
+      <button class="menu-btn" id="menuBtn" aria-label="Open menu" aria-expanded="false">☰</button>
+      <nav id="navLinks" class="nav-links">
+        <a href="#home">Home</a>
+        <a href="#donors">Find Donors</a>
+        <a href="#register">Register</a>
+        <a href="#requests">Blood Requests</a>
+        <a href="#info">Info</a>
+        <button class="btn btn-outline btn-sm" id="adminBtn" type="button">Admin Login</button>
+      </nav>
+    </div>
+  </header>
+
+  <main>
+    <!-- ========== HERO ========== -->
+    <section id="home" class="hero">
+      <div class="container hero-inner">
+        <div class="hero-text">
+          <span class="pill">Connecting donors and patients directly</span>
+          <h1>Your one step can save someone's <span class="accent">life</span></h1>
+          <p>Find blood donors in your city, or register as a donor yourself. In an emergency, post a request and reach the right person quickly.</p>
+          <div class="hero-cta">
+            <a href="#donors" class="btn btn-primary">Find a Donor</a>
+            <a href="#register" class="btn btn-outline">Become a Donor</a>
+          </div>
+        </div>
+        <div class="stat-cards">
+          <div class="stat"><strong id="statTotal">-</strong><span>Registered donors</span></div>
+          <div class="stat"><strong id="statAvailable">-</strong><span>Available now</span></div>
+          <div class="stat"><strong id="statOpen">-</strong><span>Open requests</span></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ========== BLOOD GROUP CHIPS ========== -->
+    <section class="chips-section">
+      <div class="container">
+        <p class="chips-title">Choose a blood group (with donor counts)</p>
+        <div id="groupChips" class="chips"></div>
+      </div>
+    </section>
+
+    <!-- ========== FIND DONORS ========== -->
+    <section id="donors" class="section">
+      <div class="container">
+        <h2>Find Blood Donors</h2>
+        <p class="sub">Filter by name, blood group or city. Call or WhatsApp a donor directly.</p>
+
+        <form id="filterForm" class="filters" autocomplete="off">
+          <input type="search" name="q" placeholder="Search by name" aria-label="Search by name">
+          <select name="bloodGroup" aria-label="Blood group"></select>
+          <input type="search" name="city" placeholder="City (e.g. Meerut)" aria-label="City">
+          <select name="available" aria-label="Availability">
+            <option value="">All donors</option>
+            <option value="true">Available only</option>
+          </select>
+          <button type="button" class="btn btn-outline" id="resetFilters">Reset</button>
+        </form>
+
+        <div id="donorGrid" class="grid cards" aria-live="polite"></div>
+        <div id="pager" class="pager"></div>
+      </div>
+    </section>
+
+    <!-- ========== REGISTER ========== -->
+    <section id="register" class="section alt">
+      <div class="container narrow">
+        <h2>Register as a Donor</h2>
+        <p class="sub">Your details will appear in the directory so people can contact you when they need blood.</p>
+        <form id="registerForm" class="form-card" novalidate></form>
+      </div>
+    </section>
+
+    <!-- ========== BLOOD REQUESTS ========== -->
+    <section id="requests" class="section">
+      <div class="container">
+        <h2>Blood Requests</h2>
+        <p class="sub">Does a patient need blood? Post a request. Donors can see it here and get in touch.</p>
+
+        <div class="split">
+          <div>
+            <div class="req-head">
+              <h3>Active requests</h3>
+              <select id="reqStatus" aria-label="Filter requests by status">
+                <option value="Open">Open</option>
+                <option value="Fulfilled">Fulfilled</option>
+                <option value="All">All</option>
+              </select>
+            </div>
+            <div id="requestGrid" class="req-list" aria-live="polite"></div>
+          </div>
+
+          <form id="requestForm" class="form-card" novalidate>
+            <h3>Post a new request</h3>
+            <label>Patient name *
+              <input name="patientName" required maxlength="100">
+            </label>
+            <div class="grid-2">
+              <label>Blood group *
+                <select name="bloodGroup" required></select>
+              </label>
+              <label>Units *
+                <input name="units" type="number" min="1" max="10" value="1" required>
+              </label>
+            </div>
+            <label>Hospital *
+              <input name="hospital" required maxlength="150">
+            </label>
+            <div class="grid-2">
+              <label>City *
+                <input name="city" required maxlength="80">
+              </label>
+              <label>Contact number *
+                <input name="contactPhone" inputmode="numeric" placeholder="10-digit mobile" required>
+              </label>
+            </div>
+            <div class="grid-2">
+              <label>Urgency *
+                <select name="urgency" required>
+                  <option>Normal</option>
+                  <option>Urgent</option>
+                  <option>Critical</option>
+                </select>
+              </label>
+              <label>Needed by *
+                <input name="requiredDate" type="date" required>
+              </label>
+            </div>
+            <button class="btn btn-primary" type="submit">Post Request</button>
+          </form>
+        </div>
+      </div>
+    </section>
+
+    <!-- ========== INFO ========== -->
+    <section id="info" class="section alt">
+      <div class="container">
+        <h2>Useful Information</h2>
+        <p class="sub">Blood group compatibility, eligibility requirements and common questions.</p>
+
+        <div class="info-grid">
+          <div class="panel">
+            <h3>Red blood cell compatibility</h3>
+            <div class="table-wrap">
+              <table>
+                <thead><tr><th>Group</th><th>Can donate to</th><th>Can receive from</th></tr></thead>
+                <tbody>
+                  <tr><td><b>O-</b></td><td>Everyone</td><td>O-</td></tr>
+                  <tr><td><b>O+</b></td><td>O+, A+, B+, AB+</td><td>O+, O-</td></tr>
+                  <tr><td><b>A-</b></td><td>A+, A-, AB+, AB-</td><td>A-, O-</td></tr>
+                  <tr><td><b>A+</b></td><td>A+, AB+</td><td>A+, A-, O+, O-</td></tr>
+                  <tr><td><b>B-</b></td><td>B+, B-, AB+, AB-</td><td>B-, O-</td></tr>
+                  <tr><td><b>B+</b></td><td>B+, AB+</td><td>B+, B-, O+, O-</td></tr>
+                  <tr><td><b>AB-</b></td><td>AB+, AB-</td><td>AB-, A-, B-, O-</td></tr>
+                  <tr><td><b>AB+</b></td><td>AB+</td><td>Everyone</td></tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+          <div class="panel">
+            <h3>General donation requirements</h3>
+            <ul class="ticks">
+              <li>Age between 18 and 65 years</li>
+              <li>Weight of at least 45 kg</li>
+              <li>Hemoglobin usually 12.5 g/dL or higher</li>
+              <li>Gap since last donation: about 3 months for men, 4 months for women</li>
+              <li>You should feel healthy on the day, with no fever or infection</li>
+            </ul>
+            <p class="note">These are general guidelines. The final decision is always made by a doctor or blood bank after screening.</p>
+          </div>
+        </div>
+
+        <div class="faq">
+          <h3>Frequently asked questions</h3>
+          <details><summary>Is a donor's phone number visible to everyone?</summary><p>Yes, the whole point of the directory is direct contact. That is why we ask for your consent when you register. You can ask an admin to remove your entry at any time.</p></details>
+          <details><summary>What does "Rest period" mean?</summary><p>The donor gave blood recently and needs time to recover. Until then the card shows "Rest period".</p></details>
+          <details><summary>What happens when a request is fulfilled?</summary><p>An admin marks it as "Fulfilled" so people don't contact the requester unnecessarily.</p></details>
+          <details><summary>What should I do first in an emergency?</summary><p>Contact the nearest hospital or blood bank first. In India you can also call the emergency number 112. This directory is a helpful tool, not a replacement for medical verification.</p></details>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <footer class="footer">
+    <div class="container">
+      <p>🩸 RaktSetu - Blood Donor Directory. This platform only connects donors with people in need. Health screening of donors is the responsibility of the hospital or blood bank.</p>
+    </div>
+  </footer>
+
+  <!-- ========== DIALOGS ========== -->
+  <dialog id="editDialog">
+    <form id="editForm" class="form-card" novalidate></form>
+  </dialog>
+
+  <dialog id="adminDialog">
+    <form id="adminForm" class="form-card" method="dialog">
+      <h3>Admin Login</h3>
+      <label>Admin key
+        <input type="password" name="key" required autocomplete="current-password">
+      </label>
+      <div class="actions">
+        <button type="button" class="btn btn-outline" data-close>Cancel</button>
+        <button type="submit" class="btn btn-primary">Login</button>
+      </div>
+    </form>
+  </dialog>
+
+  <div id="toasts" class="toasts" aria-live="polite"></div>
+
+  <script src="js/config.js"></script>
+  <script src="js/app.js"></script>
+</body>
+</html>
